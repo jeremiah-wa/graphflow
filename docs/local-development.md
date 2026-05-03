@@ -61,19 +61,22 @@ The Neo4j graph sink lives in `graphflow_core.sinks.neo4j`. The CLI
 exposes two commands that talk to a real Neo4j:
 
 ```bash
-# Verify the connection declared in connections.yaml
-$env:NEO4J_PASSWORD = "graphflow"
+# Verify the connection declared in connections.yaml. NEO4J_PASSWORD
+# must match the password of your local Neo4j instance (see
+# docker-compose.yml / .env) and is never stored in source control.
+$env:NEO4J_PASSWORD = "<your-local-dev-password>"
 uv run graphflow graph ping examples/simple_csv
 
 # Parse, map, and load the connector into Neo4j
 uv run graphflow load examples/simple_csv
 ```
 
-A single Docker container is enough for local development:
+A single Docker container is enough for local development. Choose
+your own password and pass it through as `NEO4J_AUTH=neo4j/<password>`:
 
 ```bash
 docker run --rm -d --name gf-neo4j -p 7687:7687 -p 7474:7474 `
-    -e NEO4J_AUTH=neo4j/graphflow neo4j:5
+    -e NEO4J_AUTH=neo4j/<your-local-dev-password> neo4j:5
 ```
 
 Then run the sink integration tests against it:
@@ -81,7 +84,7 @@ Then run the sink integration tests against it:
 ```bash
 $env:GRAPHFLOW_NEO4J_URI = "bolt://localhost:7687"
 $env:GRAPHFLOW_NEO4J_USERNAME = "neo4j"
-$env:GRAPHFLOW_NEO4J_PASSWORD = "graphflow"
+$env:GRAPHFLOW_NEO4J_PASSWORD = "<your-local-dev-password>"
 uv run pytest -q -m integration packages/graphflow_core
 ```
 

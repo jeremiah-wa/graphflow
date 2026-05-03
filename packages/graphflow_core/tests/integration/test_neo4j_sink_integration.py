@@ -4,15 +4,17 @@ These tests are marked ``integration`` and skipped unless the
 ``GRAPHFLOW_NEO4J_URI`` env var is set, so the default test run stays
 fast and external-service-free.
 
-Run them locally with a single docker container, e.g.:
+Run them locally against a Neo4j instance you have started separately
+(for example, via ``docker compose up -d neo4j`` using the stack in
+``docker-compose.yml``). Export the Bolt URI, username, and the name
+of the env var that holds your password; the test code reads them
+from the environment so this docstring does not contain any
+credentials.
 
 ```bash
-docker run --rm -d --name gf-neo4j -p 7687:7687 -p 7474:7474 \
-    -e NEO4J_AUTH=neo4j/graphflow neo4j:5
-
-GRAPHFLOW_NEO4J_URI=bolt://localhost:7687 \
-GRAPHFLOW_NEO4J_USERNAME=neo4j \
-GRAPHFLOW_NEO4J_PASSWORD=graphflow \
+export GRAPHFLOW_NEO4J_URI=bolt://localhost:7687
+export GRAPHFLOW_NEO4J_USERNAME=neo4j
+export GRAPHFLOW_NEO4J_PASSWORD=...   # your local dev password
 uv run pytest -m integration packages/graphflow_core
 ```
 
@@ -38,12 +40,13 @@ pytestmark = pytest.mark.integration
 
 def _neo4j_env() -> dict[str, str] | None:
     uri = os.environ.get("GRAPHFLOW_NEO4J_URI")
-    if not uri:
+    password = os.environ.get("GRAPHFLOW_NEO4J_PASSWORD")
+    if not uri or not password:
         return None
     return {
         "uri": uri,
         "username": os.environ.get("GRAPHFLOW_NEO4J_USERNAME", "neo4j"),
-        "password": os.environ.get("GRAPHFLOW_NEO4J_PASSWORD", "neo4j"),
+        "password": password,
     }
 
 
@@ -51,7 +54,10 @@ def _neo4j_env() -> dict[str, str] | None:
 def neo4j_driver() -> Iterator[Any]:
     env = _neo4j_env()
     if env is None:
-        pytest.skip("GRAPHFLOW_NEO4J_URI not set; skipping Neo4j integration tests")
+        pytest.skip(
+            "GRAPHFLOW_NEO4J_URI and GRAPHFLOW_NEO4J_PASSWORD must be set to run "
+            "Neo4j integration tests"
+        )
     from neo4j import GraphDatabase
 
     driver = GraphDatabase.driver(env["uri"], auth=(env["username"], env["password"]))
