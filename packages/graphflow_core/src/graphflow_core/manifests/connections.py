@@ -32,14 +32,16 @@ class ConnectionSpec(BaseModel):
 
     type: ConnectionType
 
-    # neo4j fields
+    # neo4j fields. ``password_from_env`` and ``api_key_from_env`` hold the
+    # *name* of an environment variable to read the secret from at runtime;
+    # they never contain the secret value itself.
     uri: str | None = None
     username: str | None = None
-    password_from_env: str | None = None
+    password_from_env: str | None = None  # ggignore - env var name, not a secret  # noqa: S105
 
     # llm fields
     provider: str | None = None
-    api_key_from_env: str | None = None
+    api_key_from_env: str | None = None  # ggignore - env var name, not a secret  # noqa: S105
 
     @field_validator("password_from_env", "api_key_from_env")
     @classmethod
