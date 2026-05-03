@@ -14,6 +14,11 @@ app = typer.Typer(
 )
 
 
+@app.callback()
+def _root() -> None:
+    """Root callback. Forces subcommand-mode so commands are addressable by name."""
+
+
 @app.command()
 def version() -> None:
     """Print the installed GraphFlow CLI and core versions."""

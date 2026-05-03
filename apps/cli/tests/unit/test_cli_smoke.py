@@ -6,7 +6,6 @@ from typer.testing import CliRunner
 
 from graphflow_cli.main import app
 
-
 runner = CliRunner()
 
 
