@@ -1,0 +1,12 @@
+[
+  {
+    "company_number": "00000001",
+    "company_name": "Example Holdings Ltd",
+    "company_status": "active"
+  },
+  {
+    "company_number": "00000002",
+    "company_name": "Demo Trading Ltd",
+    "company_status": "dissolved"
+  }
+]
