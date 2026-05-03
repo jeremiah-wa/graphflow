@@ -11,10 +11,12 @@ from graphflow_core.sinks.neo4j.cypher import (
     CypherStatement,
     render_constraint_statements,
     render_node_upsert_statements,
+    render_relationship_upsert_statements,
 )
 
 __all__ = [
     "CypherStatement",
     "render_constraint_statements",
     "render_node_upsert_statements",
+    "render_relationship_upsert_statements",
 ]

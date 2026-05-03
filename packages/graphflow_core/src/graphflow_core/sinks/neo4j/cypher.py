@@ -25,8 +25,8 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-from graphflow_core.graph.objects import GraphNode
-from graphflow_core.manifests.ontology import OntologySpec
+from graphflow_core.graph.objects import GraphNode, GraphRelationship
+from graphflow_core.manifests.ontology import OntologySpec, RelationshipSpec
 
 _IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
@@ -72,6 +72,101 @@ def render_node_upsert_statements(nodes: list[GraphNode]) -> list[CypherStatemen
         )
         statements.append(CypherStatement(cypher=cypher, parameters={"rows": rows}))
     return statements
+
+
+def render_relationship_upsert_statements(
+    relationships: list[GraphRelationship],
+    ontology: OntologySpec,
+) -> list[CypherStatement]:
+    """Return one MERGE statement per relationship type.
+
+    The MERGE clause depends on the ontology's
+    :class:`RelationshipKey.strategy`:
+
+    - ``endpoints_and_type``: ``MERGE (a)-[r:TYPE]->(b)``. Re-running
+      with the same endpoints does not duplicate the edge.
+    - ``explicit_property``: ``MERGE (a)-[r:TYPE {<key>: row.rel_key}]->(b)``.
+      The mapping must supply the keying property in
+      ``relationship.properties``.
+
+    All other properties are SET via ``r += row.props`` so re-runs stay
+    idempotent on property changes.
+    """
+    if not relationships:
+        return []
+
+    rels_by_type: dict[str, list[GraphRelationship]] = {}
+    for rel in relationships:
+        rels_by_type.setdefault(rel.type, []).append(rel)
+
+    ontology_rels: dict[str, RelationshipSpec] = {
+        spec.type: spec for spec in ontology.relationships
+    }
+
+    statements: list[CypherStatement] = []
+    for rel_type, group_rels in rels_by_type.items():
+        ontology_rel = ontology_rels.get(rel_type)
+        if ontology_rel is None:
+            raise ValueError(f"relationship type '{rel_type}' is not declared in the ontology")
+        statements.append(_render_relationship_group(rel_type, group_rels, ontology_rel))
+    return statements
+
+
+def _render_relationship_group(
+    rel_type: str,
+    group_rels: list[GraphRelationship],
+    ontology_rel: RelationshipSpec,
+) -> CypherStatement:
+    safe_type = _safe_identifier(rel_type, kind="relationship type")
+    # Endpoint identifiers are uniform across the group (cross-validated
+    # in load_connector and again on the GraphRelationship model), so we
+    # take them from the first relationship.
+    head = group_rels[0]
+    safe_from_label = _safe_identifier(head.from_label, kind="from label")
+    safe_to_label = _safe_identifier(head.to_label, kind="to label")
+    safe_from_key = _safe_identifier(head.from_key_property, kind="from key property")
+    safe_to_key = _safe_identifier(head.to_key_property, kind="to key property")
+
+    if ontology_rel.key.strategy == "explicit_property":
+        if ontology_rel.key.property is None:  # pragma: no cover - manifest validator
+            raise ValueError(
+                f"relationship '{rel_type}' uses 'explicit_property' strategy "
+                "but does not declare a key property"
+            )
+        safe_key_prop = _safe_identifier(
+            ontology_rel.key.property, kind="relationship key property"
+        )
+        merge_clause = f"MERGE (a)-[r:{safe_type} {{{safe_key_prop}: row.rel_key}}]->(b)"
+        rows = [
+            {
+                "from_key": rel.from_key_value,
+                "to_key": rel.to_key_value,
+                "rel_key": rel.properties.get(ontology_rel.key.property),
+                "props": {
+                    k: v for k, v in rel.properties.items() if k != ontology_rel.key.property
+                },
+            }
+            for rel in group_rels
+        ]
+    else:  # endpoints_and_type
+        merge_clause = f"MERGE (a)-[r:{safe_type}]->(b)"
+        rows = [
+            {
+                "from_key": rel.from_key_value,
+                "to_key": rel.to_key_value,
+                "props": dict(rel.properties),
+            }
+            for rel in group_rels
+        ]
+
+    cypher = (
+        "UNWIND $rows AS row "
+        f"MATCH (a:{safe_from_label} {{{safe_from_key}: row.from_key}}) "
+        f"MATCH (b:{safe_to_label} {{{safe_to_key}: row.to_key}}) "
+        f"{merge_clause} "
+        "SET r += row.props"
+    )
+    return CypherStatement(cypher=cypher, parameters={"rows": rows})
 
 
 def render_constraint_statements(ontology: OntologySpec) -> list[CypherStatement]:
