@@ -10,8 +10,12 @@ must satisfy.
 from __future__ import annotations
 
 from graphflow_core.sources.base import ParsedRecord, SourceReader
+from graphflow_core.sources.csv_reader import CsvFileReader
+from graphflow_core.sources.errors import SourceReadError
 
 __all__ = [
+    "CsvFileReader",
     "ParsedRecord",
+    "SourceReadError",
     "SourceReader",
 ]
