@@ -1,0 +1,9 @@
+version: "0.1"
+
+source:
+  name: companies_csv
+  type: file
+  format: csv
+  path: data/companies.csv
+  primary_key:
+    - company_number

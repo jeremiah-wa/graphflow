@@ -1,0 +1,43 @@
+version: "0.1"
+
+ontology:
+  name: company_network
+  graph_model: property_graph
+
+  nodes:
+    - label: Company
+      key:
+        property: company_number
+      properties:
+        company_number:
+          type: string
+          required: true
+        name:
+          type: string
+          required: true
+        status:
+          type: string
+          required: false
+
+    - label: Person
+      key:
+        property: person_id
+      properties:
+        person_id:
+          type: string
+          required: true
+        name:
+          type: string
+          required: true
+
+  relationships:
+    - type: OFFICER_OF
+      from: Person
+      to: Company
+      key:
+        strategy: endpoints_and_type
+      properties:
+        role:
+          type: string
+        appointed_on:
+          type: date
