@@ -105,6 +105,11 @@ class Neo4jGraphSink:
     # GraphSink protocol -----------------------------------------------
 
     def create_constraints(self, ontology: OntologySpec) -> GraphWriteResult:
+        # Cache the ontology so a subsequent `upsert_relationships`
+        # call does not need it passed in again. This matches the
+        # class docstring which documents create_constraints as one
+        # of the two ways to configure the sink.
+        self._ontology = ontology
         statements = render_constraint_statements(ontology)
         self._run_statements(statements)
         return GraphWriteResult(constraints_created=len(statements))
