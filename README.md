@@ -111,6 +111,11 @@ The repo is a `uv` workspace. To install and run the unit test suite:
 
 ```bash
 uv sync
+
+# Optional: Set up pre-commit hooks
+uv run pre-commit install
+
+# Run checks
 uv run ruff check .
 uv run mypy
 uv run pytest -q -m "not integration and not e2e"
