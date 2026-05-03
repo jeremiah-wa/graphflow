@@ -7,6 +7,7 @@ import typer
 import graphflow_core
 from graphflow_cli import __version__ as cli_version
 from graphflow_cli.commands.config import config_app
+from graphflow_cli.commands.graph import graph_app
 from graphflow_cli.commands.ingest import ingest as ingest_command
 from graphflow_cli.commands.map import map_command
 
@@ -16,6 +17,7 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 app.add_typer(config_app)
+app.add_typer(graph_app)
 app.command(name="ingest")(ingest_command)
 app.command(name="map")(map_command)
 
