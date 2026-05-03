@@ -1,0 +1,40 @@
+# GitGuardian configuration for the graphflow repository.
+#
+# Every rule here targets a specific, reviewed false positive. We do
+# not maintain a blanket allow-list and we do not ignore real secrets.
+# If GitGuardian flags a new pattern, first investigate whether it is
+# a real credential and only then consider adding a scoped exemption
+# here.
+
+version: 2
+
+paths-ignore:
+  # `.env.example` is committed on purpose as a template. It ships no
+  # literal credentials -- every password field contains the
+  # placeholder string `change-me-in-local-env`. We ignore the file so
+  # a future contributor who adds another placeholder does not
+  # accidentally re-trigger a scan, and we rely on PR review to keep
+  # it placeholder-only.
+  - .env.example
+
+matches-ignore:
+  # docker-compose.yml uses `graphflow` as the POSTGRES_USER and
+  # POSTGRES_DB default. GitGuardian's low-precision "Generic Password"
+  # detector occasionally matches this literal because it sits near
+  # the POSTGRES_PASSWORD field. The actual POSTGRES_PASSWORD has no
+  # default -- it is required via `${POSTGRES_PASSWORD:?...}` and
+  # compose fails fast if the developer has not set it.
+  - name: compose postgres user/db literal (not a password)
+    match: graphflow
+
+  # The CI integration-tests job derives its Neo4j and Postgres
+  # passwords from `github.run_id` and `github.run_attempt` so every
+  # workflow run uses an ephemeral value that only exists for the
+  # lifetime of the service containers it spawns. These values are
+  # public (they appear in the workflow run URL) and useless to
+  # anyone outside the run. The scanner still flags them because the
+  # shape matches a "high-entropy secret" heuristic.
+  - name: ci neo4j ephemeral password template
+    match: ci-neo4j-${{ github.run_id }}-${{ github.run_attempt }}
+  - name: ci postgres ephemeral password template
+    match: ci-pg-${{ github.run_id }}-${{ github.run_attempt }}

@@ -18,6 +18,13 @@ dev = [
     "mypy>=1.10",
     "httpx>=0.27",
     "types-PyYAML>=6.0",
+    # Clients used only by @pytest.mark.integration tests that exercise
+    # the docker-compose stack. They are not runtime dependencies of
+    # any published package. `neo4j` is a runtime dep of graphflow-core
+    # (see packages/graphflow_core/pyproject.toml) so it's not repeated
+    # here.
+    "psycopg[binary]>=3.2",
+    "redis>=5.0",
 ]
 
 [tool.uv.workspace]
@@ -76,6 +83,7 @@ testpaths = [
     "apps/cli/tests",
     "apps/api/tests",
     "apps/worker/tests",
+    "tests",
 ]
 markers = [
     "integration: tests that require external services (e.g. Neo4j)",

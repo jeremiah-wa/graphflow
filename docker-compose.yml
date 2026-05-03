@@ -1,0 +1,98 @@
+# GraphFlow local development stack.
+#
+# v0.1 ships only the infrastructure services the pipeline actually
+# needs: Neo4j (graph destination, #4), Postgres (run state / metadata,
+# future #12 API), and Redis (task queue, future #13 worker). The API
+# (#12), worker (#13), and web (#11) service definitions will be added
+# as those apps land so the compose file stays in sync with real,
+# testable code.
+#
+# All services are published on non-default host ports (with a small
+# offset) so the stack can coexist with any local databases you may
+# already run.
+#
+# Usage:
+#   cp .env.example .env
+#   docker compose up -d
+#   docker compose ps
+#   docker compose down -v   # also removes the named volumes
+#
+# Health checks: each service defines a `healthcheck` so dependent
+# services (and CI) can wait for readiness instead of racing.
+
+name: graphflow
+
+services:
+  neo4j:
+    image: neo4j:5
+    container_name: graphflow-neo4j
+    environment:
+      # The `?` suffix makes compose fail fast with a clear error if the
+      # variable is unset, instead of silently starting Neo4j with a
+      # shared default password across every developer.
+      NEO4J_AUTH: "neo4j/${NEO4J_PASSWORD:?set NEO4J_PASSWORD in .env}"
+      # Keep APOC off by default; we don't need it in v0.1.
+      NEO4J_server_memory_heap_initial__size: "512m"
+      NEO4J_server_memory_heap_max__size: "1G"
+    ports:
+      - "${NEO4J_HTTP_PORT:-7474}:7474"
+      - "${NEO4J_BOLT_PORT:-7687}:7687"
+    volumes:
+      - neo4j-data:/data
+      - neo4j-logs:/logs
+    healthcheck:
+      # `cypher-shell` ships inside the image and exits non-zero when
+      # Neo4j is not ready to accept queries yet. The password is read
+      # from the container's own env so this line does not embed it.
+      test:
+        [
+          "CMD-SHELL",
+          "cypher-shell -u neo4j -p \"$${NEO4J_AUTH#neo4j/}\" 'RETURN 1' || exit 1",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+      start_period: 30s
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16
+    container_name: graphflow-postgres
+    environment:
+      POSTGRES_USER: "${POSTGRES_USER:-graphflow}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}"
+      POSTGRES_DB: "${POSTGRES_DB:-graphflow}"
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $${POSTGRES_USER:-graphflow} -d $${POSTGRES_DB:-graphflow}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7
+    container_name: graphflow-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  neo4j-data:
+  neo4j-logs:
+  postgres-data:
+  redis-data:

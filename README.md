@@ -106,7 +106,7 @@ See [`docs/manifests.md`](docs/manifests.md) for examples.
 
 ## Quick start
 
-The repo is a `uv` workspace. To install and run the test suite:
+The repo is a `uv` workspace. To install and run the unit test suite:
 
 ```bash
 uv sync
@@ -116,7 +116,18 @@ uv run pytest -q -m "not integration and not e2e"
 uv run graphflow version
 ```
 
-See [`docs/local-development.md`](docs/local-development.md) for details.
+To also run the integration tests (Neo4j, Postgres, Redis), start the
+bundled development stack first:
+
+```bash
+cp .env.example .env
+docker compose up -d
+uv run pytest -q -m integration
+docker compose down -v
+```
+
+See [`docs/local-development.md`](docs/local-development.md) for details,
+including which tests run where in CI.
 
 ## Current status
 

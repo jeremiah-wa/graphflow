@@ -163,8 +163,10 @@ def test_upsert_relationships_uses_ontology_after_set_ontology() -> None:
 def test_create_constraints_caches_ontology_for_relationship_upserts() -> None:
     driver = _StubDriver()
     sink = Neo4jGraphSink(driver)
+    # Only call create_constraints. upsert_relationships should work
+    # without a separate set_ontology() because create_constraints
+    # caches the ontology on the sink.
     sink.create_constraints(_ontology())
-    sink.set_ontology(_ontology())
     rel = GraphRelationship(
         type="OFFICER_OF",
         from_label="Person",
