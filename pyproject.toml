@@ -1,0 +1,83 @@
+[project]
+name = "graphflow-monorepo"
+version = "0.0.0"
+description = "GraphFlow monorepo root (workspace, not a publishable package)."
+requires-python = ">=3.11"
+dependencies = [
+    "graphflow-core",
+    "graphflow-cli",
+    "graphflow-api",
+    "graphflow-worker",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "ruff>=0.5",
+    "mypy>=1.10",
+    "httpx>=0.27",
+]
+
+[tool.uv.workspace]
+members = [
+    "packages/graphflow_core",
+    "apps/cli",
+    "apps/api",
+    "apps/worker",
+]
+
+[tool.uv.sources]
+graphflow-core = { workspace = true }
+graphflow-cli = { workspace = true }
+graphflow-api = { workspace = true }
+graphflow-worker = { workspace = true }
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = [
+    "packages/graphflow_core/src",
+    "apps/cli/src",
+    "apps/api/src",
+    "apps/worker/src",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "TID"]
+ignore = []
+
+[tool.ruff.lint.isort]
+known-first-party = [
+    "graphflow_core",
+    "graphflow_cli",
+    "graphflow_api",
+    "graphflow_worker",
+]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = [
+    "packages/graphflow_core/src",
+    "apps/cli/src",
+    "apps/api/src",
+    "apps/worker/src",
+]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = [
+    "packages/graphflow_core/tests",
+    "apps/cli/tests",
+    "apps/api/tests",
+    "apps/worker/tests",
+]
+markers = [
+    "integration: tests that require external services (e.g. Neo4j)",
+    "e2e: end-to-end tests that exercise the full CLI",
+]
+addopts = "-ra --strict-markers --import-mode=importlib"
