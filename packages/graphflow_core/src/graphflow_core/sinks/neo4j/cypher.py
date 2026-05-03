@@ -25,6 +25,7 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
+from graphflow_core.graph.objects import GraphNode
 from graphflow_core.manifests.ontology import OntologySpec
 
 _IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
@@ -43,6 +44,34 @@ class CypherStatement:
 
     cypher: str
     parameters: dict[str, Any]
+
+
+def render_node_upsert_statements(nodes: list[GraphNode]) -> list[CypherStatement]:
+    """Return one MERGE statement per ``(label, key_property)`` group.
+
+    Nodes are grouped by their identity shape so each call uses
+    ``UNWIND $rows AS row`` over a parameter list, keeping both the
+    Cypher text and the parameter footprint small even for large
+    batches. The MERGE matches on the key property and assigns the
+    full property dictionary on each upsert so re-runs are idempotent.
+    """
+    if not nodes:
+        return []
+
+    groups: dict[tuple[str, str], list[GraphNode]] = {}
+    for node in nodes:
+        groups.setdefault((node.label, node.key_property), []).append(node)
+
+    statements: list[CypherStatement] = []
+    for (label, key_property), group_nodes in groups.items():
+        safe_label = _safe_identifier(label, kind="node label")
+        safe_key = _safe_identifier(key_property, kind="key property")
+        rows = [{"key": node.key_value, "props": dict(node.properties)} for node in group_nodes]
+        cypher = (
+            f"UNWIND $rows AS row MERGE (n:{safe_label} {{{safe_key}: row.key}}) SET n += row.props"
+        )
+        statements.append(CypherStatement(cypher=cypher, parameters={"rows": rows}))
+    return statements
 
 
 def render_constraint_statements(ontology: OntologySpec) -> list[CypherStatement]:
