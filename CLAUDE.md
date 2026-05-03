@@ -148,7 +148,13 @@ Useful docs:
 
 ## Commit and PR guidance
 
-Keep changes small and reviewable.
+Keep changes small and reviewable. See
+[`CONTRIBUTING.md`](CONTRIBUTING.md) for the full rules. In short:
+
+- One logical change per commit; one issue per PR.
+- Do not mix refactors, formatting churn, and behaviour changes.
+- Use [Conventional Commits](https://www.conventionalcommits.org/) for
+  commit summaries and PR titles.
 
 Good PRs should include:
 
@@ -158,12 +164,12 @@ Good PRs should include:
 - Linked issue
 - Any follow-up work
 
-Use conventional-style commit summaries where practical:
+Examples:
 
 ```text
-Add manifest models
-Implement Neo4j graph sink
-Document local development workflow
+feat(manifests): add Pydantic models for source and ontology
+fix(sink): use parameterised MERGE for relationship upserts
+docs: document local development workflow
 ```
 
 ## Agent workflow

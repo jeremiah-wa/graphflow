@@ -28,6 +28,7 @@ Add screenshots, CLI output, or logs if useful.
 ## Checklist
 
 - [ ] Change is scoped to the linked issue
+- [ ] Commits and PR title follow the convention in [`CONTRIBUTING.md`](../CONTRIBUTING.md)
 - [ ] Core logic lives in `packages/graphflow_core` where appropriate
 - [ ] Tests added or updated where practical
 - [ ] Docs updated if behaviour, architecture, or manifests changed
