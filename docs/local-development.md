@@ -55,98 +55,125 @@ uv run graphflow map examples/simple_csv
 uv run graphflow map examples/simple_json --show-issues
 ```
 
-## Loading into Neo4j
+## Test categories
 
-The Neo4j graph sink lives in `graphflow_core.sinks.neo4j`. The CLI
-exposes two commands that talk to a real Neo4j:
+GraphFlow tests are grouped by what they need to run:
+
+| Category | Marker | External services | Runs in CI |
+| --- | --- | --- | --- |
+| Unit | none | none | every push / PR |
+| Integration | `@pytest.mark.integration` | Neo4j, Postgres, Redis | dedicated CI job with service containers |
+| End-to-end | `@pytest.mark.e2e` | full compose stack incl. future apps | manual, documented below |
+
+Typical commands:
 
 ```bash
-# Verify the connection declared in connections.yaml. NEO4J_PASSWORD
-# must match the password of your local Neo4j instance (see
-# docker-compose.yml / .env) and is never stored in source control.
-$env:NEO4J_PASSWORD = "<your-local-dev-password>"
-uv run graphflow graph ping examples/simple_csv
+# Unit tests (fast, no external services, default)
+uv run pytest -q -m "not integration and not e2e"
 
-# Parse, map, and load the connector into Neo4j
+# Integration tests (requires docker compose up -d)
+uv run pytest -q -m integration
+
+# End-to-end tests (run individually as they land)
+uv run pytest -q -m e2e
+```
+
+CI mirrors this split: a `lint-types-tests` job runs the unit suite,
+and a separate `integration-tests` job spins up Neo4j, Postgres, and
+Redis as service containers and runs the integration suite. See
+`.github/workflows/ci.yml`.
+
+## Local development stack
+
+The bundled `docker-compose.yml` starts the three infrastructure
+services the v0.1 pipeline talks to today:
+
+```text
+neo4j      graph destination (port 7687, browser at 7474)
+postgres   metadata / future API run state (port 5432)
+redis      future worker queue (port 6379)
+```
+
+`apps/api`, `apps/worker`, and `apps/web` services will be added to the
+compose file by the issues that introduce those apps (#11, #12, #13)
+so the compose file stays in sync with real, testable code.
+
+### One-time setup
+
+```bash
+cp .env.example .env
+# Adjust ports or passwords in .env if they conflict with something else
+```
+
+### Start the stack
+
+```bash
+docker compose up -d
+docker compose ps
+```
+
+Each service defines a health check; wait for all three to show
+`healthy` before running integration tests.
+
+### Smoke-test reachability
+
+From a host shell, with the stack running and `.env` loaded into your
+environment:
+
+```bash
+uv run pytest -q -m integration tests/integration/test_compose_stack.py
+```
+
+This verifies that:
+
+- Neo4j accepts a Bolt session and executes `RETURN 1`
+- Postgres accepts connections and executes `SELECT 1`
+- Redis answers `PING`
+
+The same tests run in CI via service containers.
+
+### Exercise the Neo4j sink against the local stack
+
+```bash
+uv run graphflow graph ping examples/simple_csv
 uv run graphflow load examples/simple_csv
 ```
 
-A single Docker container is enough for local development. Choose
-your own password and pass it through as `NEO4J_AUTH=neo4j/<password>`:
+Both commands read `NEO4J_PASSWORD` from the environment (`.env` or
+shell export).
+
+### Stop the stack
 
 ```bash
-docker run --rm -d --name gf-neo4j -p 7687:7687 -p 7474:7474 `
-    -e NEO4J_AUTH=neo4j/<your-local-dev-password> neo4j:5
-```
-
-Then run the sink integration tests against it:
-
-```bash
-$env:GRAPHFLOW_NEO4J_URI = "bolt://localhost:7687"
-$env:GRAPHFLOW_NEO4J_USERNAME = "neo4j"
-$env:GRAPHFLOW_NEO4J_PASSWORD = "<your-local-dev-password>"
-uv run pytest -q -m integration packages/graphflow_core
-```
-
-CI excludes `integration` and `e2e` tests by default; they run only
-when the `GRAPHFLOW_NEO4J_*` env vars are set.
-
-Integration and E2E tests are marked with `@pytest.mark.integration` and
-`@pytest.mark.e2e`. They will require Neo4j (and possibly other services)
-once the corresponding modules land; see
-[`docs/testing-strategy.md`](testing-strategy.md).
-
-## Intended local services
-
-The v0.1 Docker Compose stack should include:
-
-```text
-api        FastAPI service
-worker     background/job runner
-web        frontend app
-postgres   metadata and run state
-redis      queue/cache, optional initially
-neo4j      graph destination
+docker compose down        # preserves named volumes
+docker compose down -v     # also removes neo4j/postgres/redis data
 ```
 
 ## Environment variables
 
-Example `.env` values:
-
-```env
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-POSTGRES_DB=graphflow
-POSTGRES_USER=graphflow
-POSTGRES_PASSWORD=graphflow
-
-REDIS_URL=redis://localhost:6379/0
-
-NEO4J_URI=bolt://localhost:7687
-NEO4J_USERNAME=neo4j
-NEO4J_PASSWORD=password
-
-OPENAI_API_KEY=
-```
-
-LLM keys should be optional. v0.1 should run without paid APIs.
+`.env.example` is the source of truth. Copy it to `.env` and adjust as
+needed. LLM keys are optional; v0.1 runs without paid APIs.
 
 ## Expected developer workflow
-
-Once implemented, the local workflow should look like:
 
 ```bash
 # Start local services
 docker compose up -d
 
-# Validate manifests
-graphflow config validate examples/simple_csv
+# Validate manifests and the data they point to
+uv run graphflow config validate examples/simple_csv
 
-# Check Neo4j connectivity
-graphflow graph ping
+# Read records from the source
+uv run graphflow ingest examples/simple_csv
 
-# Run demo pipeline
-graphflow run examples/simple_csv
+# Map records into graph objects and surface issues
+uv run graphflow map examples/simple_csv
+
+# Confirm Neo4j is reachable
+uv run graphflow graph ping examples/simple_csv
+
+# Load the whole pipeline into Neo4j
+uv run graphflow load examples/simple_csv
 ```
 
 ## Development principles
