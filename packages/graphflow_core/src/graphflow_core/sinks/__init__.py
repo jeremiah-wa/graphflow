@@ -14,9 +14,11 @@ from graphflow_core.sinks.base import (
     GraphSinkError,
     GraphWriteResult,
 )
+from graphflow_core.sinks.neo4j import Neo4jGraphSink
 
 __all__ = [
     "GraphSink",
     "GraphSinkError",
     "GraphWriteResult",
+    "Neo4jGraphSink",
 ]
