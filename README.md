@@ -138,7 +138,7 @@ denormalized CSV data into a knowledge graph:
 ```bash
 # Start services and set password
 docker compose up -d
-export NEO4J_PASSWORD="your-local-password"
+export GRAPHFLOW_NEO4J_PASSWORD="your-local-password"
 
 # Run the automated demo
 ./scripts/run_demo.sh  # or run_demo.ps1 on Windows

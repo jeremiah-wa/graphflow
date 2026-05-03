@@ -63,7 +63,7 @@ docker compose up -d
 # Wait for services to be healthy
 
 # 2. Set Neo4j password (or copy .env.example to .env)
-export NEO4J_PASSWORD="your-local-password"
+export GRAPHFLOW_NEO4J_PASSWORD="your-local-password"
 
 # 3. Validate the connector configuration
 graphflow config validate examples/company_officers

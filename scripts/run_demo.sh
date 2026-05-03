@@ -45,9 +45,9 @@ if ! command -v uv &> /dev/null; then
     exit 1
 fi
 
-if [ -z "${NEO4J_PASSWORD:-}" ]; then
-    write_error "NEO4J_PASSWORD environment variable not set"
-    echo "Please set it: export NEO4J_PASSWORD='your-password'"
+if [ -z "${GRAPHFLOW_NEO4J_PASSWORD:-}" ]; then
+    write_error "GRAPHFLOW_NEO4J_PASSWORD environment variable not set"
+    echo "Please set it: export GRAPHFLOW_NEO4J_PASSWORD='your-password'"
     exit 1
 fi
 
@@ -63,7 +63,7 @@ if [ "$SKIP_SERVICES" != "true" ]; then
     attempt=0
     while [ $attempt -lt $max_attempts ]; do
         attempt=$((attempt + 1))
-        if docker exec graphflow-neo4j cypher-shell -u neo4j -p "$NEO4J_PASSWORD" "RETURN 1" &>/dev/null; then
+        if docker exec graphflow-neo4j cypher-shell -u neo4j -p "$GRAPHFLOW_NEO4J_PASSWORD" "RETURN 1" &>/dev/null; then
             echo ""
             write_success "Neo4j is ready"
             break
@@ -114,7 +114,7 @@ write_success "Graph loaded successfully"
 write_step "Running verification query"
 query="MATCH (p:Person)-[r:OFFICER_OF]->(c:Company) RETURN COUNT(p) AS persons, COUNT(DISTINCT c) AS companies, COUNT(r) AS relationships"
 
-if docker exec graphflow-neo4j cypher-shell -u neo4j -p "$NEO4J_PASSWORD" "$query" --format plain 2>/dev/null; then
+if docker exec graphflow-neo4j cypher-shell -u neo4j -p "$GRAPHFLOW_NEO4J_PASSWORD" "$query" --format plain 2>/dev/null; then
     write_success "Verification complete"
 else
     write_error "Verification query failed"
@@ -124,5 +124,5 @@ echo ""
 write_success "Demo completed successfully!"
 echo -e "\nYou can now:"
 echo "  - Open Neo4j Browser at http://localhost:7474"
-echo "  - Login with neo4j / $NEO4J_PASSWORD"
+echo "  - Login with neo4j / $GRAPHFLOW_NEO4J_PASSWORD"
 echo "  - Run queries from docs/demo-scenario.md"

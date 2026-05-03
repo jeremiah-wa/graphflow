@@ -44,9 +44,9 @@ if (-not (Get-Command uv -ErrorAction SilentlyContinue)) {
     exit 1
 }
 
-if (-not $env:NEO4J_PASSWORD) {
-    Write-Error "NEO4J_PASSWORD environment variable not set"
-    Write-Host "Please set it: `$env:NEO4J_PASSWORD = 'your-password'"
+if (-not $env:GRAPHFLOW_NEO4J_PASSWORD) {
+    Write-Error "GRAPHFLOW_NEO4J_PASSWORD environment variable not set"
+    Write-Host "Please set it: `$env:GRAPHFLOW_NEO4J_PASSWORD = 'your-password'"
     exit 1
 }
 
@@ -67,7 +67,7 @@ if (-not $SkipServices) {
     while ($attempt -lt $maxAttempts) {
         $attempt++
         try {
-            docker exec graphflow-neo4j cypher-shell -u neo4j -p $env:NEO4J_PASSWORD "RETURN 1" 2>$null | Out-Null
+            docker exec graphflow-neo4j cypher-shell -u neo4j -p $env:GRAPHFLOW_NEO4J_PASSWORD "RETURN 1" 2>$null | Out-Null
             if ($LASTEXITCODE -eq 0) {
                 Write-Success "Neo4j is ready"
                 break
@@ -140,7 +140,7 @@ MATCH (p:Person)-[r:OFFICER_OF]->(c:Company)
 RETURN COUNT(p) AS persons, COUNT(DISTINCT c) AS companies, COUNT(r) AS relationships
 "@
 
-$result = docker exec graphflow-neo4j cypher-shell -u neo4j -p $env:NEO4J_PASSWORD "$query" --format plain 2>$null
+$result = docker exec graphflow-neo4j cypher-shell -u neo4j -p $env:GRAPHFLOW_NEO4J_PASSWORD "$query" --format plain 2>$null
 if ($LASTEXITCODE -eq 0) {
     Write-Host $result
     Write-Success "Verification complete"
@@ -152,5 +152,5 @@ Write-Host "`n" -NoNewline
 Write-Success "Demo completed successfully!"
 Write-Host "`nYou can now:"
 Write-Host "  - Open Neo4j Browser at http://localhost:7474"
-Write-Host "  - Login with neo4j / $env:NEO4J_PASSWORD"
+Write-Host "  - Login with neo4j / $env:GRAPHFLOW_NEO4J_PASSWORD"
 Write-Host "  - Run queries from docs/demo-scenario.md"

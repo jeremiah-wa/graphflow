@@ -31,6 +31,7 @@ graphflow ingest examples/company_officers --limit 5
 graphflow map examples/company_officers
 
 # Load into Neo4j (requires local Neo4j running)
+export GRAPHFLOW_NEO4J_PASSWORD="your-password"
 graphflow load examples/company_officers
 ```
 
