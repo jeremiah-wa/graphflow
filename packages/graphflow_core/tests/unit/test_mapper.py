@@ -197,10 +197,14 @@ def test_mapper_emits_relationships() -> None:
         }
     )
     result = mapper.map([record])
-    assert not result.has_errors()
     assert result.nodes == []
     assert len(result.relationships) == 1
     assert result.relationships[0].type == "OFFICER_OF"
+    # Orphan-relationship detection runs over the whole result, so the
+    # relationship without matching nodes is reported as an error issue
+    # while the relationship object itself is still returned for the
+    # caller to inspect or drop.
+    assert any("unknown" in issue.message for issue in result.issues)
 
 
 def test_loaders_are_used_to_back_the_test() -> None:

@@ -18,6 +18,10 @@ from graphflow_core.manifests.loader import ConnectorManifest
 from graphflow_core.mapping.issues import MappingIssue
 from graphflow_core.mapping.nodes import map_record_to_node
 from graphflow_core.mapping.relationships import map_record_to_relationship
+from graphflow_core.mapping.validation import (
+    detect_duplicate_node_keys,
+    detect_orphan_relationships,
+)
 from graphflow_core.sources.base import ParsedRecord
 
 
@@ -97,4 +101,8 @@ class Mapper:
                 if rel is not None:
                     result.relationships.append(rel)
 
+        deduped, dup_issues = detect_duplicate_node_keys(result.nodes)
+        result.nodes = deduped
+        result.issues.extend(dup_issues)
+        result.issues.extend(detect_orphan_relationships(result.nodes, result.relationships))
         return result

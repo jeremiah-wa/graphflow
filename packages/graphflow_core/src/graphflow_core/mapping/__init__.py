@@ -18,6 +18,10 @@ from graphflow_core.mapping.issues import MappingIssue, MappingIssueSeverity
 from graphflow_core.mapping.mapper import Mapper, MappingResult
 from graphflow_core.mapping.nodes import map_record_to_node
 from graphflow_core.mapping.relationships import map_record_to_relationship
+from graphflow_core.mapping.validation import (
+    detect_duplicate_node_keys,
+    detect_orphan_relationships,
+)
 
 __all__ = [
     "FieldCoercionError",
@@ -26,6 +30,8 @@ __all__ = [
     "MappingIssueSeverity",
     "MappingResult",
     "coerce_to_property_type",
+    "detect_duplicate_node_keys",
+    "detect_orphan_relationships",
     "map_record_to_node",
     "map_record_to_relationship",
     "read_source_field",
