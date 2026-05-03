@@ -11,7 +11,7 @@ import pytest
 from neo4j import GraphDatabase
 from typer.testing import CliRunner
 
-from graphflow_core.cli.main import app
+from graphflow_cli.main import app
 
 
 @pytest.mark.e2e
