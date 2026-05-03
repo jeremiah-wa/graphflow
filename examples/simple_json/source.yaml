@@ -1,0 +1,9 @@
+version: "0.1"
+
+source:
+  name: companies_json
+  type: file
+  format: json
+  path: data/companies.json
+  primary_key:
+    - company_number

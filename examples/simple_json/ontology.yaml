@@ -1,0 +1,20 @@
+version: "0.1"
+
+ontology:
+  name: company_network
+  graph_model: property_graph
+
+  nodes:
+    - label: Company
+      key:
+        property: company_number
+      properties:
+        company_number:
+          type: string
+          required: true
+        name:
+          type: string
+          required: true
+        status:
+          type: string
+          required: false
