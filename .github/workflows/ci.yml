@@ -119,3 +119,75 @@ jobs:
 
       - name: Integration tests
         run: uv run pytest -q -m integration
+
+  e2e-tests:
+    name: End-to-end tests (demo connectors)
+    runs-on: ubuntu-latest
+    # E2E tests exercise the full CLI flow against real services,
+    # including manifest validation, data ingestion, mapping, and
+    # Neo4j loading. They verify idempotency and complex queries.
+    
+    env:
+      GRAPHFLOW_NEO4J_URI: bolt://localhost:7687
+      GRAPHFLOW_NEO4J_USERNAME: neo4j
+      GRAPHFLOW_NEO4J_PASSWORD: "ci-neo4j-${{ github.run_id }}-${{ github.run_attempt }}"
+      GRAPHFLOW_POSTGRES_DSN: "postgresql://graphflow:ci-pg-${{ github.run_id }}-${{ github.run_attempt }}@localhost:5432/graphflow"
+      GRAPHFLOW_REDIS_URL: redis://localhost:6379/0
+
+    services:
+      neo4j:
+        image: neo4j:5
+        env:
+          NEO4J_AUTH: "neo4j/ci-neo4j-${{ github.run_id }}-${{ github.run_attempt }}"
+        ports:
+          - 7687:7687
+          - 7474:7474
+        options: >-
+          --health-cmd "cypher-shell -u neo4j -p \"ci-neo4j-${{ github.run_id }}-${{ github.run_attempt }}\" 'RETURN 1' || exit 1"
+          --health-interval 10s
+          --health-timeout 10s
+          --health-retries 20
+          --health-start-period 30s
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: graphflow
+          POSTGRES_PASSWORD: "ci-pg-${{ github.run_id }}-${{ github.run_attempt }}"
+          POSTGRES_DB: graphflow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U graphflow -d graphflow"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.9.5"
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: E2E tests
+        run: uv run pytest -q -m e2e

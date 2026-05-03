@@ -87,6 +87,6 @@ testpaths = [
 ]
 markers = [
     "integration: tests that require external services (e.g. Neo4j)",
-    "e2e: end-to-end tests that exercise the full CLI",
+    "e2e: end-to-end tests that exercise the full CLI workflow",
 ]
 addopts = "-ra --strict-markers --import-mode=importlib"
