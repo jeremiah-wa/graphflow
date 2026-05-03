@@ -27,9 +27,9 @@ matches-ignore:
   - name: compose postgres user/db literal (not a password)
     match: graphflow
 
-  # The CI integration-tests job derives its Neo4j and Postgres
-  # passwords from `github.run_id` and `github.run_attempt` so every
-  # workflow run uses an ephemeral value that only exists for the
+  # The CI integration-tests and e2e-tests jobs derive their Neo4j and
+  # Postgres passwords from `github.run_id` and `github.run_attempt` so
+  # every workflow run uses an ephemeral value that only exists for the
   # lifetime of the service containers it spawns. These values are
   # public (they appear in the workflow run URL) and useless to
   # anyone outside the run. The scanner still flags them because the
@@ -38,3 +38,7 @@ matches-ignore:
     match: ci-neo4j-${{ github.run_id }}-${{ github.run_attempt }}
   - name: ci postgres ephemeral password template
     match: ci-pg-${{ github.run_id }}-${{ github.run_attempt }}
+  - name: ci neo4j auth ephemeral template
+    match: neo4j/ci-neo4j-${{ github.run_id }}-${{ github.run_attempt }}
+  - name: ci postgres dsn ephemeral template
+    match: postgresql://graphflow:ci-pg-${{ github.run_id }}-${{ github.run_attempt }}@localhost:5432/graphflow
