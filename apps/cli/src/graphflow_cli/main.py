@@ -5,7 +5,6 @@ from __future__ import annotations
 import typer
 
 import graphflow_core
-
 from graphflow_cli import __version__ as cli_version
 
 app = typer.Typer(

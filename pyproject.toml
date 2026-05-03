@@ -41,6 +41,14 @@ src = [
 select = ["E", "F", "I", "UP", "B", "SIM", "TID"]
 ignore = []
 
+[tool.ruff.lint.isort]
+known-first-party = [
+    "graphflow_core",
+    "graphflow_cli",
+    "graphflow_api",
+    "graphflow_worker",
+]
+
 [tool.ruff.format]
 quote-style = "double"
 
