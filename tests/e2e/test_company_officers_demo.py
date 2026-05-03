@@ -94,7 +94,7 @@ class TestCompanyOfficersDemo:
             print(f"stderr: {result.stderr}")
             if result.exception:
                 print(f"exception: {result.exception}")
-        
+
         assert result.exit_code == 0
         assert "Neo4j connection successful" in result.stdout
 
