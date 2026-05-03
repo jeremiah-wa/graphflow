@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: GraphFlow agent guidance
+    url: https://github.com/jeremiah-wa/graphflow/blob/main/docs/agents/README.md
+    about: Read the agent and contributor guidance before creating broad implementation issues.
