@@ -136,8 +136,9 @@ class TestCompanyOfficersDemo:
                 RETURN c.name AS company
                 ORDER BY company
                 """
-            ).values("company")
-            assert sarah_companies == ["Global Innovations PLC", "TechCorp Limited"]
+            ).data()
+            company_names = [record["company"] for record in sarah_companies]
+            assert company_names == ["Global Innovations PLC", "TechCorp Limited"]
 
     def test_load_graph_idempotency(self, example_path: Path, neo4j_driver):
         """Test that re-loading is idempotent."""
