@@ -49,6 +49,10 @@ uv run graphflow config validate examples/simple_json
 # Read records from a connector source
 uv run graphflow ingest examples/simple_csv
 uv run graphflow ingest examples/simple_json --limit 0
+
+# Map records into graph objects and surface validation issues
+uv run graphflow map examples/simple_csv
+uv run graphflow map examples/simple_json --show-issues
 ```
 
 Integration and E2E tests are marked with `@pytest.mark.integration` and
