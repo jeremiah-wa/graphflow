@@ -1,0 +1,53 @@
+name: Spike
+description: Research, investigation, or technical discovery
+title: ""
+labels: ["Spike"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for research tasks where the output is a recommendation, decision, or follow-up issue.
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What question should this spike answer?
+      placeholder: Describe the uncertainty or decision to investigate.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Why does this matter?
+    validations:
+      required: false
+  - type: textarea
+    id: investigation_scope
+    attributes:
+      label: Investigation scope
+      description: What should be evaluated?
+      value: |
+        - 
+        - 
+        - 
+    validations:
+      required: true
+  - type: textarea
+    id: deliverable
+    attributes:
+      label: Deliverable
+      description: What should be produced when this spike is done?
+      value: |
+        - [ ] Recommendation documented
+        - [ ] Trade-offs captured
+        - [ ] Follow-up issues created if needed
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Links, references, or constraints.
+    validations:
+      required: false
