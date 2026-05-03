@@ -88,6 +88,13 @@ class TestCompanyOfficersDemo:
         runner = CliRunner()
         result = runner.invoke(app, ["graph", "ping", str(example_path)])
 
+        if result.exit_code != 0:
+            print(f"CLI failed with exit code {result.exit_code}")
+            print(f"stdout: {result.stdout}")
+            print(f"stderr: {result.stderr}")
+            if result.exception:
+                print(f"exception: {result.exception}")
+        
         assert result.exit_code == 0
         assert "Neo4j connection successful" in result.stdout
 
