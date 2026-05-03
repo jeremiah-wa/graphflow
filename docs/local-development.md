@@ -55,6 +55,39 @@ uv run graphflow map examples/simple_csv
 uv run graphflow map examples/simple_json --show-issues
 ```
 
+## Loading into Neo4j
+
+The Neo4j graph sink lives in `graphflow_core.sinks.neo4j`. The CLI
+exposes two commands that talk to a real Neo4j:
+
+```bash
+# Verify the connection declared in connections.yaml
+$env:NEO4J_PASSWORD = "graphflow"
+uv run graphflow graph ping examples/simple_csv
+
+# Parse, map, and load the connector into Neo4j
+uv run graphflow load examples/simple_csv
+```
+
+A single Docker container is enough for local development:
+
+```bash
+docker run --rm -d --name gf-neo4j -p 7687:7687 -p 7474:7474 `
+    -e NEO4J_AUTH=neo4j/graphflow neo4j:5
+```
+
+Then run the sink integration tests against it:
+
+```bash
+$env:GRAPHFLOW_NEO4J_URI = "bolt://localhost:7687"
+$env:GRAPHFLOW_NEO4J_USERNAME = "neo4j"
+$env:GRAPHFLOW_NEO4J_PASSWORD = "graphflow"
+uv run pytest -q -m integration packages/graphflow_core
+```
+
+CI excludes `integration` and `e2e` tests by default; they run only
+when the `GRAPHFLOW_NEO4J_*` env vars are set.
+
 Integration and E2E tests are marked with `@pytest.mark.integration` and
 `@pytest.mark.e2e`. They will require Neo4j (and possibly other services)
 once the corresponding modules land; see
