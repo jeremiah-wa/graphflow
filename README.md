@@ -100,6 +100,9 @@ See [`docs/manifests.md`](docs/manifests.md) for examples.
 - [Manifest design](docs/manifests.md)
 - [Local development](docs/local-development.md)
 - [Roadmap](docs/roadmap.md)
+- [First demo scenario](docs/demo-scenario.md)
+- [Testing strategy](docs/testing-strategy.md)
+- [Architecture decisions](docs/decisions/0001-mvp-architecture.md)
 
 ## Current status
 
