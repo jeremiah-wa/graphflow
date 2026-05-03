@@ -5,6 +5,7 @@ description = "GraphFlow core: manifests, sources, mapping, sinks, and pipeline 
 requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2.7",
+    "pyyaml>=6.0",
 ]
 
 [build-system]

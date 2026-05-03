@@ -6,12 +6,14 @@ import typer
 
 import graphflow_core
 from graphflow_cli import __version__ as cli_version
+from graphflow_cli.commands.config import config_app
 
 app = typer.Typer(
     name="graphflow",
     help="GraphFlow: turn files, APIs, and documents into knowledge graphs.",
     no_args_is_help=True,
 )
+app.add_typer(config_app)
 
 
 @app.callback()
