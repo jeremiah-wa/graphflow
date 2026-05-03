@@ -20,10 +20,9 @@ dev = [
     "types-PyYAML>=6.0",
     # Clients used only by @pytest.mark.integration tests that exercise
     # the docker-compose stack. They are not runtime dependencies of
-    # any published package. `neo4j` is also a runtime dep of
-    # graphflow-core once #26 merges; listing it here keeps this PR's
-    # tests runnable before that.
-    "neo4j>=5.20",
+    # any published package. `neo4j` is a runtime dep of graphflow-core
+    # (see packages/graphflow_core/pyproject.toml) so it's not repeated
+    # here.
     "psycopg[binary]>=3.2",
     "redis>=5.0",
 ]

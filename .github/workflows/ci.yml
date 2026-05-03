@@ -46,16 +46,34 @@ jobs:
     # locally also runs in CI. Unit tests and integration tests are
     # kept in separate jobs so a flaky service does not block the
     # fast-feedback lint/type/unit job.
+    #
+    # Passwords are derived from `github.run_id` / `github.run_attempt`
+    # so every run uses an ephemeral value that is useless outside the
+    # run and never looks like a generic literal to secret scanners.
+    # The same expression is repeated at the service-container and
+    # job-env level because GitHub Actions does not guarantee that a
+    # job-level `env.X` is expanded inside another `env.` map on the
+    # same job; using `github.*` directly avoids that ordering gotcha
+    # and keeps every reference identical so the passwords line up
+    # across neo4j, postgres, and the tests.
+
+    env:
+      GRAPHFLOW_NEO4J_URI: bolt://localhost:7687
+      GRAPHFLOW_NEO4J_USERNAME: neo4j
+      GRAPHFLOW_NEO4J_PASSWORD: "ci-neo4j-${{ github.run_id }}-${{ github.run_attempt }}"
+      GRAPHFLOW_POSTGRES_DSN: "postgresql://graphflow:ci-pg-${{ github.run_id }}-${{ github.run_attempt }}@localhost:5432/graphflow"
+      GRAPHFLOW_REDIS_URL: redis://localhost:6379/0
+
     services:
       neo4j:
         image: neo4j:5
         env:
-          NEO4J_AUTH: neo4j/graphflow
+          NEO4J_AUTH: "neo4j/ci-neo4j-${{ github.run_id }}-${{ github.run_attempt }}"
         ports:
           - 7687:7687
           - 7474:7474
         options: >-
-          --health-cmd "cypher-shell -u neo4j -p graphflow 'RETURN 1' || exit 1"
+          --health-cmd "cypher-shell -u neo4j -p \"ci-neo4j-${{ github.run_id }}-${{ github.run_attempt }}\" 'RETURN 1' || exit 1"
           --health-interval 10s
           --health-timeout 10s
           --health-retries 20
@@ -64,7 +82,7 @@ jobs:
         image: postgres:16
         env:
           POSTGRES_USER: graphflow
-          POSTGRES_PASSWORD: graphflow
+          POSTGRES_PASSWORD: "ci-pg-${{ github.run_id }}-${{ github.run_attempt }}"
           POSTGRES_DB: graphflow
         ports:
           - 5432:5432
@@ -83,13 +101,6 @@ jobs:
           --health-timeout 5s
           --health-retries 10
 
-    env:
-      GRAPHFLOW_NEO4J_URI: bolt://localhost:7687
-      GRAPHFLOW_NEO4J_USERNAME: neo4j
-      GRAPHFLOW_NEO4J_PASSWORD: graphflow
-      GRAPHFLOW_POSTGRES_DSN: postgresql://graphflow:graphflow@localhost:5432/graphflow
-      GRAPHFLOW_REDIS_URL: redis://localhost:6379/0
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -107,11 +118,4 @@ jobs:
         run: uv sync --all-extras --dev
 
       - name: Integration tests
-        env:
-          # Export the per-run ephemeral passwords into the env vars
-          # that tests read. Done here (rather than at job scope) so
-          # that the values do not end up in any artefact that logs
-          # the full job env.
-          GRAPHFLOW_NEO4J_PASSWORD: ${{ env.CI_NEO4J_PASSWORD }}
-          GRAPHFLOW_POSTGRES_DSN: "postgresql://graphflow:${{ env.CI_POSTGRES_PASSWORD }}@localhost:5432/graphflow"
         run: uv run pytest -q -m integration
