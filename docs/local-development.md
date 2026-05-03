@@ -42,8 +42,13 @@ uv run pytest -q -m "not integration and not e2e"
 # Try the CLI skeleton
 uv run graphflow version
 
-# Validate the bundled example connector
+# Validate the bundled example connectors
 uv run graphflow config validate examples/simple_csv
+uv run graphflow config validate examples/simple_json
+
+# Read records from a connector source
+uv run graphflow ingest examples/simple_csv
+uv run graphflow ingest examples/simple_json --limit 0
 ```
 
 Integration and E2E tests are marked with `@pytest.mark.integration` and
