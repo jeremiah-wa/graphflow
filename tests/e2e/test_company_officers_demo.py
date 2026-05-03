@@ -96,7 +96,7 @@ class TestCompanyOfficersDemo:
                 print(f"exception: {result.exception}")
 
         assert result.exit_code == 0
-        assert "Neo4j connection successful" in result.stdout
+        assert "OK: connected to bolt://localhost:7687" in result.stdout
 
     def test_load_graph_first_run(self, example_path: Path, neo4j_driver):
         """Test loading the graph for the first time."""
@@ -104,7 +104,7 @@ class TestCompanyOfficersDemo:
         result = runner.invoke(app, ["load", str(example_path)])
 
         assert result.exit_code == 0
-        assert "Loading complete" in result.stdout
+        assert "Loaded into Neo4j:" in result.stdout
 
         # Verify the graph content
         with neo4j_driver.session() as session:
@@ -184,9 +184,12 @@ class TestCompanyOfficersDemo:
                 """
             ).data()
 
-            assert len(multi_directors) == 1
-            assert multi_directors[0]["name"] == "Sarah Johnson"
-            assert multi_directors[0]["companies"] == 2
+            assert len(multi_directors) == 2
+            # Both Emma Williams and Sarah Johnson have 2 directorships
+            names = {d["name"] for d in multi_directors}
+            assert names == {"Emma Williams", "Sarah Johnson"}
+            for director in multi_directors:
+                assert director["companies"] == 2
 
             # Check dissolved company
             dissolved = session.run(
@@ -209,5 +212,8 @@ class TestCompanyOfficersDemo:
             ).data()
 
             assert len(emma_history) == 2
+            # Emma was appointed to DataFlow first (2020-11-01), then TechCorp (2021-07-01)
             assert emma_history[0]["company"] == "DataFlow Systems Ltd"
+            assert emma_history[0]["appointed"] == "2020-11-01"
             assert emma_history[1]["company"] == "TechCorp Limited"
+            assert emma_history[1]["appointed"] == "2021-07-01"
