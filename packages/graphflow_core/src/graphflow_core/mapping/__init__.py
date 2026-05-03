@@ -15,11 +15,13 @@ from graphflow_core.mapping.fields import (
     read_source_field,
 )
 from graphflow_core.mapping.issues import MappingIssue, MappingIssueSeverity
+from graphflow_core.mapping.nodes import map_record_to_node
 
 __all__ = [
     "FieldCoercionError",
     "MappingIssue",
     "MappingIssueSeverity",
     "coerce_to_property_type",
+    "map_record_to_node",
     "read_source_field",
 ]
