@@ -12,9 +12,11 @@ from __future__ import annotations
 from graphflow_core.sources.base import ParsedRecord, SourceReader
 from graphflow_core.sources.csv_reader import CsvFileReader
 from graphflow_core.sources.errors import SourceReadError
+from graphflow_core.sources.json_reader import JsonFileReader
 
 __all__ = [
     "CsvFileReader",
+    "JsonFileReader",
     "ParsedRecord",
     "SourceReadError",
     "SourceReader",
