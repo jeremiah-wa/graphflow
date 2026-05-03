@@ -1,6 +1,6 @@
 name: Task
 description: Small implementation or maintenance task
-title: ""
+title: "[Task]: "
 labels: ["Task"]
 body:
   - type: markdown
