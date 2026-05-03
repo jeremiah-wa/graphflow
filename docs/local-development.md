@@ -4,20 +4,49 @@ GraphFlow should start local-first. The initial development experience should re
 
 ## Prerequisites
 
-Recommended tools:
+Required tools:
 
 - Python 3.11+
-- Node.js 20+
-- Docker Desktop
+- [`uv`](https://docs.astral.sh/uv/) for Python packaging and the workspace
 - Git
-- GitHub CLI, optional
 
-Future tooling choices may include:
+Optional tools (needed later):
 
-- `uv` for Python packaging and environment management
-- `ruff` for linting and formatting
+- Docker Desktop (for Neo4j and the full Compose stack)
+- Node.js 20+ and `pnpm` (for the v0.3 web app)
+- GitHub CLI
+
+The repo currently uses:
+
+- `uv` workspaces for the Python monorepo
+- `ruff` for lint and format
+- `mypy` for type checking
 - `pytest` for tests
-- `pnpm` for the web app
+
+## Install and run
+
+```bash
+# Install the workspace and dev tools into a local .venv
+uv sync
+
+# Lint and format check
+uv run ruff check .
+uv run ruff format --check .
+
+# Type check
+uv run mypy
+
+# Unit tests (fast, no external services)
+uv run pytest -q -m "not integration and not e2e"
+
+# Try the CLI skeleton
+uv run graphflow version
+```
+
+Integration and E2E tests are marked with `@pytest.mark.integration` and
+`@pytest.mark.e2e`. They will require Neo4j (and possibly other services)
+once the corresponding modules land; see
+[`docs/testing-strategy.md`](testing-strategy.md).
 
 ## Intended local services
 

@@ -104,9 +104,26 @@ See [`docs/manifests.md`](docs/manifests.md) for examples.
 - [Testing strategy](docs/testing-strategy.md)
 - [Architecture decisions](docs/decisions/0001-mvp-architecture.md)
 
+## Quick start
+
+The repo is a `uv` workspace. To install and run the test suite:
+
+```bash
+uv sync
+uv run ruff check .
+uv run mypy
+uv run pytest -q -m "not integration and not e2e"
+uv run graphflow version
+```
+
+See [`docs/local-development.md`](docs/local-development.md) for details.
+
 ## Current status
 
-This repository is in early planning/bootstrapping. The initial GitHub issues describe the first MVP epics and features.
+This repository is in early planning/bootstrapping. The monorepo skeleton
+(core package and CLI/API/worker app skeletons with smoke tests and CI) is
+in place. Subsequent issues add manifests, ingestion, mapping, and the
+Neo4j sink.
 
 ## License
 
