@@ -27,7 +27,10 @@ services:
     image: neo4j:5
     container_name: graphflow-neo4j
     environment:
-      NEO4J_AUTH: "neo4j/${NEO4J_PASSWORD:-graphflow}"
+      # The `?` suffix makes compose fail fast with a clear error if the
+      # variable is unset, instead of silently starting Neo4j with a
+      # shared default password across every developer.
+      NEO4J_AUTH: "neo4j/${NEO4J_PASSWORD:?set NEO4J_PASSWORD in .env}"
       # Keep APOC off by default; we don't need it in v0.1.
       NEO4J_server_memory_heap_initial__size: "512m"
       NEO4J_server_memory_heap_max__size: "1G"
@@ -39,11 +42,12 @@ services:
       - neo4j-logs:/logs
     healthcheck:
       # `cypher-shell` ships inside the image and exits non-zero when
-      # Neo4j is not ready to accept queries yet.
+      # Neo4j is not ready to accept queries yet. The password is read
+      # from the container's own env so this line does not embed it.
       test:
         [
           "CMD-SHELL",
-          "cypher-shell -u neo4j -p $${NEO4J_PASSWORD:-graphflow} 'RETURN 1' || exit 1",
+          "cypher-shell -u neo4j -p \"$${NEO4J_AUTH#neo4j/}\" 'RETURN 1' || exit 1",
         ]
       interval: 10s
       timeout: 10s
@@ -56,7 +60,7 @@ services:
     container_name: graphflow-postgres
     environment:
       POSTGRES_USER: "${POSTGRES_USER:-graphflow}"
-      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-graphflow}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}"
       POSTGRES_DB: "${POSTGRES_DB:-graphflow}"
     ports:
       - "${POSTGRES_PORT:-5432}:5432"

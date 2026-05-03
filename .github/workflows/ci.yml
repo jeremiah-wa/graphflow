@@ -107,4 +107,11 @@ jobs:
         run: uv sync --all-extras --dev
 
       - name: Integration tests
+        env:
+          # Export the per-run ephemeral passwords into the env vars
+          # that tests read. Done here (rather than at job scope) so
+          # that the values do not end up in any artefact that logs
+          # the full job env.
+          GRAPHFLOW_NEO4J_PASSWORD: ${{ env.CI_NEO4J_PASSWORD }}
+          GRAPHFLOW_POSTGRES_DSN: "postgresql://graphflow:${{ env.CI_POSTGRES_PASSWORD }}@localhost:5432/graphflow"
         run: uv run pytest -q -m integration
