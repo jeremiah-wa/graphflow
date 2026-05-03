@@ -1,0 +1,8 @@
+version: "0.1"
+
+source:
+  name: company_officers_csv
+  type: file
+  format: csv
+  path: data/company_officers.csv
+  # No single primary key as this is a denormalized dataset

@@ -1,0 +1,9 @@
+company_number,company_name,incorporated_on,company_status,jurisdiction,person_id,person_name,nationality,birth_year,officer_role,appointed_on,resigned_on
+12345678,TechCorp Limited,2019-03-15,active,england-wales,P001,Sarah Johnson,British,1975,director,2019-03-15,
+12345678,TechCorp Limited,2019-03-15,active,england-wales,P002,Michael Chen,American,1982,secretary,2019-03-15,2021-06-30
+12345678,TechCorp Limited,2019-03-15,active,england-wales,P003,Emma Williams,British,1990,director,2021-07-01,
+87654321,Global Innovations PLC,2018-07-22,active,scotland,P001,Sarah Johnson,British,1975,director,2018-07-22,
+87654321,Global Innovations PLC,2018-07-22,active,scotland,P004,James Anderson,Scottish,1968,director,2018-07-22,
+11223344,DataFlow Systems Ltd,2020-11-01,active,england-wales,P003,Emma Williams,British,1990,director,2020-11-01,
+11223344,DataFlow Systems Ltd,2020-11-01,active,england-wales,P005,Maria Garcia,Spanish,1985,secretary,2020-11-01,
+99887766,CloudBase Holdings,2021-02-14,dissolved,england-wales,P002,Michael Chen,American,1982,director,2021-02-14,2021-12-31

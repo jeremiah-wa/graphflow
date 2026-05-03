@@ -1,0 +1,52 @@
+version: "0.1"
+
+pipeline:
+  name: company_officers_pipeline
+  source_ref: company_officers_csv
+  ontology_ref: company_network
+  
+  extraction:
+    mode: none
+    
+  mapping:
+    nodes:
+      - label: Company
+        source: rows[]
+        key:
+          from_field: company_number
+        properties:
+          company_number: company_number
+          name: company_name
+          incorporation_date: incorporated_on
+          status: company_status
+          jurisdiction: jurisdiction
+          
+      - label: Person
+        source: rows[]
+        key:
+          from_field: person_id
+        properties:
+          person_id: person_id
+          name: person_name
+          nationality: nationality
+          birth_year: birth_year
+          
+    relationships:
+      - type: OFFICER_OF
+        source: rows[]
+        from:
+          label: Person
+          from_field: person_id
+        to:
+          label: Company
+          from_field: company_number
+        properties:
+          role: officer_role
+          appointed_date: appointed_on
+          resigned_date: resigned_on
+          
+  destination:
+    type: neo4j
+    connection_ref: local_neo4j
+    write_mode: merge
+    batch_size: 1000
