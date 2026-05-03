@@ -71,7 +71,8 @@ packages/
   graphflow_core/      # shared product/domain logic
 
 examples/
-  simple_csv/          # structured data demo
+  simple_csv/          # basic CSV to graph demo
+  company_officers/    # denormalized CSV to normalized graph demo
   documents_to_graph/  # later document extraction demo
 
 infra/
@@ -110,6 +111,11 @@ The repo is a `uv` workspace. To install and run the unit test suite:
 
 ```bash
 uv sync
+
+# Optional: Set up pre-commit hooks
+uv run pre-commit install
+
+# Run checks
 uv run ruff check .
 uv run mypy
 uv run pytest -q -m "not integration and not e2e"
@@ -128,6 +134,38 @@ docker compose down -v
 
 See [`docs/local-development.md`](docs/local-development.md) for details,
 including which tests run where in CI.
+
+## Try the demo
+
+GraphFlow includes a complete end-to-end demo showing how to transform
+denormalized CSV data into a knowledge graph:
+
+```bash
+# Start services and set password
+docker compose up -d
+export GRAPHFLOW_NEO4J_PASSWORD="your-local-password"
+
+# Run the automated demo
+./scripts/run_demo.sh  # or run_demo.ps1 on Windows
+
+# Or run manually:
+graphflow config validate examples/company_officers
+graphflow ingest examples/company_officers --limit 5
+graphflow map examples/company_officers
+graphflow load examples/company_officers
+
+# Query in Neo4j Browser (http://localhost:7474)
+MATCH (p:Person)-[r:OFFICER_OF]->(c:Company)
+RETURN p, r, c
+```
+
+The demo creates a graph of UK companies and their officers, demonstrating:
+- Denormalized CSV → normalized graph transformation
+- Idempotent loading (safe to re-run)
+- Multiple node types from a single source
+- Relationship extraction from foreign keys
+
+See [`docs/demo-scenario.md`](docs/demo-scenario.md) for the full walkthrough.
 
 ## Current status
 

@@ -1,7 +1,7 @@
 version: "0.1"
 
 connections:
-  neo4j_local:
+  local_neo4j:
     type: neo4j
     uri: bolt://localhost:7687
     username: neo4j

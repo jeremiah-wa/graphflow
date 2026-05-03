@@ -26,9 +26,16 @@ The repo currently uses:
 ## Install and run
 
 ```bash
-# Install the workspace and dev tools into a local .venv
+# Install the workspace and dev tools
 uv sync
 
+# Set up pre-commit hooks (optional but recommended)
+uv run pre-commit install
+
+# Run all pre-commit checks manually
+uv run pre-commit run --all-files
+
+# Or run individual checks:
 # Lint and format check
 uv run ruff check .
 uv run ruff format --check .

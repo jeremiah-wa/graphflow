@@ -1,101 +1,131 @@
-# First demo scenario
+# GraphFlow Demo: Company Officers Network
 
-The v0.1 reference demo proves the GraphFlow loop end-to-end using only local
-services and no paid APIs. It lives at `examples/simple_csv/`.
+The v0.1 reference demo proves the GraphFlow pipeline end-to-end using only local
+services and no paid APIs. Two demo connectors are provided:
 
-## Narrative
+- `examples/simple_csv/` - Basic single-CSV company data (existing)
+- `examples/company_officers/` - Denormalized CSV with companies and officers (new)
 
-A user wants to build a small "company network" graph from a CSV export of
-companies and their officers. They:
+## Company Officers Demo
 
-1. Point GraphFlow at two CSV files.
-2. Describe the graph shape in an ontology manifest.
-3. Describe how CSV rows become nodes and relationships in a pipeline manifest.
-4. Run GraphFlow, which loads the graph into a local Neo4j instance
-   idempotently.
-5. Open Neo4j Browser and run a Cypher query that returns the expected graph.
+The `company_officers` demo showcases GraphFlow's ability to extract a normalized
+graph from denormalized tabular data.
 
-## Inputs
+### Narrative
 
-Two CSV files under `examples/simple_csv/data/`:
+A user has a single CSV export containing both company and person data in a
+denormalized format (typical of business reports). They want to:
 
-- `companies.csv`
-  - Columns: `company_number`, `company_name`, `company_status`
-- `officers.csv`
-  - Columns: `person_id`, `person_name`, `company_number`, `role`,
-    `appointed_on`
+1. Point GraphFlow at the denormalized CSV file
+2. Define the target graph schema (companies, people, relationships)
+3. Map the flat rows to normalized nodes and relationships
+4. Load the graph into Neo4j idempotently
+5. Query the resulting network structure
 
-## Manifests
+### Input Data
 
-Under `examples/simple_csv/`:
+One CSV file at `examples/company_officers/data/company_officers.csv`:
 
-- `source.yaml` - declares two `file` sources of `format: csv`, one per CSV.
-- `ontology.yaml` - declares `Company` and `Person` nodes plus an
-  `OFFICER_OF` relationship from `Person` to `Company`.
-- `pipeline.yaml` - extraction mode `none`, structured mapping from rows to
-  nodes and relationships, Neo4j destination with `write_mode: merge`.
-- `connections.yaml` - single `neo4j_local` connection reading credentials
-  from environment variables.
-
-See [`docs/manifests.md`](manifests.md) for the manifest shapes.
-
-## Expected graph
-
-After a successful run:
-
-- `N` `Company` nodes keyed by `company_number`.
-- `M` `Person` nodes keyed by `person_id`.
-- `K` `OFFICER_OF` relationships with `role` and `appointed_on` properties.
-
-Example verification Cypher:
-
-```cypher
-MATCH (p:Person)-[r:OFFICER_OF]->(c:Company)
-RETURN p.name AS person, r.role AS role, c.name AS company
-ORDER BY company, person
-LIMIT 25;
+```csv
+company_number,company_name,incorporated_on,company_status,jurisdiction,person_id,person_name,nationality,birth_year,officer_role,appointed_on,resigned_on
+12345678,TechCorp Limited,2019-03-15,active,england-wales,P001,Sarah Johnson,British,1975,director,2019-03-15,
+12345678,TechCorp Limited,2019-03-15,active,england-wales,P002,Michael Chen,American,1982,secretary,2019-03-15,2021-06-30
+...
 ```
 
-## Expected developer workflow
+### Manifests
+
+Under `examples/company_officers/`:
+
+- `source.yaml` - Single CSV source with denormalized data
+- `ontology.yaml` - Defines `Company` and `Person` nodes, `OFFICER_OF` relationships
+- `pipeline.yaml` - Maps flat rows to both node types and relationships
+- `connections.yaml` - Neo4j connection using environment variables
+
+### Expected Graph
+
+After loading:
+
+- 4 `Company` nodes (TechCorp, Global Innovations, DataFlow Systems, CloudBase Holdings)
+- 5 `Person` nodes (Sarah Johnson, Michael Chen, Emma Williams, James Anderson, Maria Garcia)
+- 8 `OFFICER_OF` relationships with role and date properties
+
+Key insights revealed by the graph:
+- Sarah Johnson serves as director of multiple companies
+- Officer movements between companies over time
+- Active vs dissolved company status
+
+### Running the Demo
 
 ```bash
-# 1. Start local services (Neo4j at minimum)
-docker compose up -d neo4j
+# 1. Start the local development stack
+docker compose up -d
+# Wait for services to be healthy
 
-# 2. Validate manifests
-graphflow config validate examples/simple_csv
+# 2. Set Neo4j password (or copy .env.example to .env)
+export GRAPHFLOW_NEO4J_PASSWORD="your-local-password"
 
-# 3. Check Neo4j connectivity
-graphflow graph ping
+# 3. Validate the connector configuration
+graphflow config validate examples/company_officers
 
-# 4. Run the demo pipeline
-graphflow run examples/simple_csv
+# 4. Preview data ingestion
+graphflow ingest examples/company_officers --limit 5
+
+# 5. Run mapping to see graph objects (dry run)
+graphflow map examples/company_officers
+
+# 6. Verify Neo4j connectivity
+graphflow graph ping examples/company_officers
+
+# 7. Load the graph into Neo4j
+graphflow load examples/company_officers
 ```
 
-A successful run must:
+### Verification Queries
 
-- Exit with status 0.
-- Print a run summary with counts of nodes created/merged, relationships
-  created/merged, and any validation warnings.
-- Produce the same graph when re-run with unchanged inputs (idempotent).
+After loading, open Neo4j Browser at http://localhost:7474 and run:
 
-## Success criteria
+```cypher
+// See all officer relationships
+MATCH (p:Person)-[r:OFFICER_OF]->(c:Company)
+RETURN p.name AS person, r.role AS role, c.name AS company, r.appointed_date
+ORDER BY c.name, p.name;
 
-The demo is considered working when:
+// Find people with multiple directorships
+MATCH (p:Person)-[r:OFFICER_OF {role: "director"}]->(c:Company)
+WITH p, COUNT(c) AS companies
+WHERE companies > 1
+RETURN p.name AS director, companies
+ORDER BY companies DESC;
 
-- Fresh checkout + `docker compose up -d neo4j` + `graphflow run
-  examples/simple_csv` yields the expected Cypher result on the first run.
-- Running the same command a second time yields the same result and reports
-  zero new nodes/relationships created (merges only).
-- Running with a deliberately malformed manifest fails fast with a clear
-  validation error and writes nothing to Neo4j.
-- An end-to-end test in CI exercises this flow against a Neo4j service
-  container (see [`docs/testing-strategy.md`](testing-strategy.md)).
+// Company timeline
+MATCH (c:Company)<-[r:OFFICER_OF]-(p:Person)
+RETURN c.name AS company, c.status, 
+       COLLECT({person: p.name, role: r.role, appointed: r.appointed_date}) AS officers
+ORDER BY c.incorporation_date;
+```
 
-## Out of scope for the first demo
+### Success Criteria
 
-- Document / text extraction.
-- LLM calls of any kind.
-- REST API sources.
-- Any graph database other than Neo4j.
-- Web UI.
+✓ The demo is working when:
+
+1. **First run**: Creates 4 Company nodes, 5 Person nodes, 8 relationships
+2. **Second run**: Reports 0 new nodes/relationships (idempotent merge)
+3. **Validation**: Malformed manifests fail fast before any Neo4j writes
+4. **CI**: E2E test exercises the full flow automatically
+
+### What This Demo Proves
+
+- **Denormalized → Normalized**: Single CSV to multi-node-type graph
+- **Idempotent Loading**: Safe to re-run without duplicating data
+- **Relationship Extraction**: Derives edges from foreign key fields
+- **Local-First**: No cloud services or API keys required
+- **Production Patterns**: Same manifest structure scales to real datasets
+
+## Out of Scope for v0.1
+
+- Text/document extraction (v0.2)
+- LLM-powered mapping suggestions (v0.2)
+- REST API sources (v0.2)
+- Multi-source joins within one pipeline
+- Web UI (v0.3)
