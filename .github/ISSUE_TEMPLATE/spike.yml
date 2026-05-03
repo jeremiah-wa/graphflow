@@ -1,6 +1,6 @@
 name: Spike
 description: Research, investigation, or technical discovery
-title: ""
+title: "[Spike]: "
 labels: ["Spike"]
 body:
   - type: markdown
