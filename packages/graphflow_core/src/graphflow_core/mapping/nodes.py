@@ -124,9 +124,7 @@ def map_record_to_node(
         try:
             value = coerce_to_property_type(raw, ontology_property.type)
         except FieldCoercionError as exc:
-            severity: MappingIssueSeverity = (
-                "error" if ontology_property.required else "warning"
-            )
+            severity: MappingIssueSeverity = "error" if ontology_property.required else "warning"
             issues.append(
                 MappingIssue(
                     severity=severity,
