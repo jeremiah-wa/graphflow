@@ -37,3 +37,74 @@ jobs:
 
       - name: Unit tests
         run: uv run pytest -q -m "not integration and not e2e"
+
+  integration-tests:
+    name: Integration tests (compose services)
+    runs-on: ubuntu-latest
+    # GitHub Actions service containers mirror the docker-compose stack
+    # so the same integration-marked pytest suite that developers run
+    # locally also runs in CI. Unit tests and integration tests are
+    # kept in separate jobs so a flaky service does not block the
+    # fast-feedback lint/type/unit job.
+    services:
+      neo4j:
+        image: neo4j:5
+        env:
+          NEO4J_AUTH: neo4j/graphflow
+        ports:
+          - 7687:7687
+          - 7474:7474
+        options: >-
+          --health-cmd "cypher-shell -u neo4j -p graphflow 'RETURN 1' || exit 1"
+          --health-interval 10s
+          --health-timeout 10s
+          --health-retries 20
+          --health-start-period 30s
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: graphflow
+          POSTGRES_PASSWORD: graphflow
+          POSTGRES_DB: graphflow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U graphflow -d graphflow"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      GRAPHFLOW_NEO4J_URI: bolt://localhost:7687
+      GRAPHFLOW_NEO4J_USERNAME: neo4j
+      GRAPHFLOW_NEO4J_PASSWORD: graphflow
+      GRAPHFLOW_POSTGRES_DSN: postgresql://graphflow:graphflow@localhost:5432/graphflow
+      GRAPHFLOW_REDIS_URL: redis://localhost:6379/0
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.9.5"
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install workspace
+        run: uv sync --all-extras --dev
+
+      - name: Integration tests
+        run: uv run pytest -q -m integration
