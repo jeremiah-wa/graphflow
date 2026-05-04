@@ -1,6 +1,6 @@
 [project]
 name = "graphflow-cli"
-version = "0.0.1"
+version = "0.1.0"
 description = "GraphFlow CLI: thin Typer wrapper over graphflow_core."
 requires-python = ">=3.11"
 dependencies = [

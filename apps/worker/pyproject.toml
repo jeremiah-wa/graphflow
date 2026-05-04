@@ -1,6 +1,6 @@
 [project]
 name = "graphflow-worker"
-version = "0.0.1"
+version = "0.1.0"
 description = "GraphFlow worker: thin process runner that delegates to graphflow_core."
 requires-python = ">=3.11"
 dependencies = [
