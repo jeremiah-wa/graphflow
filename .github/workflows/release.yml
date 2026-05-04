@@ -1,0 +1,152 @@
+name: Release
+
+# Publishes a GitHub release when a semver tag is pushed.
+#
+# Flow:
+#   1. A human bumps sub-package versions + updates CHANGELOG.md in a PR
+#      (e.g. the `release/vX.Y.Z` PR pattern) and merges it to main.
+#   2. A human tags the merge commit with `vX.Y.Z` and pushes the tag.
+#   3. This workflow validates the tag, extracts the matching CHANGELOG
+#      section, and publishes a GitHub release pointing at the tag.
+#
+# The workflow also supports manual dispatch so a release can be
+# re-published if the notes need regenerating (it uses `--clobber`).
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-*" # pre-releases e.g. v0.2.0-rc.1
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to (re)publish a release for, e.g. v0.1.0"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: Publish GitHub release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Resolve tag
+        id: tag
+        env:
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [ -n "$INPUT_TAG" ]; then
+            TAG="$INPUT_TAG"
+          else
+            TAG="$REF_NAME"
+          fi
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-.+)?$ ]]; then
+            echo "::error::Tag '$TAG' does not match vMAJOR.MINOR.PATCH[-prerelease]"
+            exit 1
+          fi
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if [[ "$VERSION" == *-* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.tag.outputs.tag }}
+          fetch-depth: 0
+
+      - name: Verify sub-package versions match tag
+        env:
+          EXPECTED: ${{ steps.tag.outputs.version }}
+        run: |
+          set -euo pipefail
+          MISMATCH=0
+          for manifest in \
+            packages/graphflow_core/pyproject.toml \
+            apps/cli/pyproject.toml \
+            apps/api/pyproject.toml \
+            apps/worker/pyproject.toml; do
+            actual=$(grep -E '^version\s*=' "$manifest" | head -n1 | sed -E 's/.*"([^"]+)".*/\1/')
+            if [ "$actual" != "$EXPECTED" ]; then
+              echo "::error file=$manifest::version is '$actual', expected '$EXPECTED' (from tag)"
+              MISMATCH=1
+            else
+              echo "ok: $manifest -> $actual"
+            fi
+          done
+          if [ "$MISMATCH" -ne 0 ]; then
+            echo "::error::One or more sub-packages do not match the tag version. Bump them in a release PR before tagging."
+            exit 1
+          fi
+
+      - name: Extract release notes from CHANGELOG.md
+        id: notes
+        env:
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          set -euo pipefail
+          if [ ! -f CHANGELOG.md ]; then
+            echo "::error::CHANGELOG.md not found at repo root."
+            exit 1
+          fi
+          # Grab everything under `## [X.Y.Z] - ...` up to the next `## ` heading
+          # or the link-reference block at the bottom of the file.
+          notes=$(awk -v ver="$VERSION" '
+            BEGIN { found = 0 }
+            /^## \[/ {
+              if (found) { exit }
+              if ($0 ~ "^## \\[" ver "\\]") { found = 1; next }
+            }
+            found { print }
+          ' CHANGELOG.md)
+          if [ -z "$(echo "$notes" | tr -d '[:space:]')" ]; then
+            echo "::error::No CHANGELOG section found for version $VERSION."
+            echo "::error::Expected a heading like: ## [$VERSION] - YYYY-MM-DD"
+            exit 1
+          fi
+          {
+            echo "notes<<EOF_NOTES"
+            echo "$notes"
+            echo "EOF_NOTES"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Write release notes to file
+        env:
+          NOTES: ${{ steps.notes.outputs.notes }}
+        run: |
+          printf '%s\n' "$NOTES" > release_notes.md
+          echo "--- release_notes.md ---"
+          cat release_notes.md
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
+          PRERELEASE: ${{ steps.tag.outputs.prerelease }}
+        run: |
+          set -euo pipefail
+          prerelease_flag=""
+          if [ "$PRERELEASE" = "true" ]; then
+            prerelease_flag="--prerelease"
+          fi
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists - updating notes."
+            gh release edit "$TAG" \
+              --title "GraphFlow $TAG" \
+              --notes-file release_notes.md \
+              $prerelease_flag
+          else
+            gh release create "$TAG" \
+              --title "GraphFlow $TAG" \
+              --notes-file release_notes.md \
+              --verify-tag \
+              $prerelease_flag
+          fi
