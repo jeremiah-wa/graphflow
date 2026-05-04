@@ -27,10 +27,12 @@ from graphflow_core.extraction.base import (
     TextChunk,
 )
 from graphflow_core.extraction.errors import ExtractionError
+from graphflow_core.extraction.fast import FastExtractor
 
 __all__ = [
     "CandidateEntity",
     "ExtractionError",
     "Extractor",
+    "FastExtractor",
     "TextChunk",
 ]
