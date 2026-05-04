@@ -34,6 +34,7 @@ from graphflow_core.resolution.base import (
     Resolver,
 )
 from graphflow_core.resolution.errors import ResolutionError
+from graphflow_core.resolution.simple import SimpleResolver
 
 __all__ = [
     "DecisionStatus",
@@ -42,4 +43,5 @@ __all__ = [
     "ResolutionResult",
     "ResolvedEntity",
     "Resolver",
+    "SimpleResolver",
 ]
