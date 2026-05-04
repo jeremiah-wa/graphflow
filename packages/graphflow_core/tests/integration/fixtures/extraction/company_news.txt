@@ -1,0 +1,9 @@
+Acme Ltd announced today that its long-time partner, Beta Corporation,
+has signed a new distribution agreement.
+
+The agreement was negotiated by Alice Johnson on behalf of Acme Ltd,
+and by Bob Smith on behalf of Beta Corporation. Alice Johnson is the
+CEO of Acme Ltd; Bob Smith is the CEO of Beta Corporation.
+
+Industry analysts noted that this is the third such partnership Acme
+Ltd has announced this quarter.
