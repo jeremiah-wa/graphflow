@@ -234,7 +234,7 @@ wheels = [
 
 [[package]]
 name = "graphflow-api"
-version = "0.0.1"
+version = "0.1.0"
 source = { editable = "apps/api" }
 dependencies = [
     { name = "fastapi" },
@@ -251,7 +251,7 @@ requires-dist = [
 
 [[package]]
 name = "graphflow-cli"
-version = "0.0.1"
+version = "0.1.0"
 source = { editable = "apps/cli" }
 dependencies = [
     { name = "graphflow-core" },
@@ -266,7 +266,7 @@ requires-dist = [
 
 [[package]]
 name = "graphflow-core"
-version = "0.0.1"
+version = "0.1.0"
 source = { editable = "packages/graphflow_core" }
 dependencies = [
     { name = "neo4j" },
@@ -330,7 +330,7 @@ dev = [
 
 [[package]]
 name = "graphflow-worker"
-version = "0.0.1"
+version = "0.1.0"
 source = { editable = "apps/worker" }
 dependencies = [
     { name = "graphflow-core" },
