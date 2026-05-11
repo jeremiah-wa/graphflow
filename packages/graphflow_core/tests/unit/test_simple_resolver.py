@@ -217,9 +217,7 @@ def test_similar_surfaces_above_review_threshold_flagged_for_review() -> None:
     review_entity_id = result.decisions[0].entity_id
     assert review_decision.alternatives == [review_entity_id]
     # New entity should be flagged for review.
-    new_entity = next(
-        e for e in result.entities if e.entity_id == review_decision.entity_id
-    )
+    new_entity = next(e for e in result.entities if e.entity_id == review_decision.entity_id)
     assert new_entity.needs_review is True
 
 
@@ -462,9 +460,7 @@ def test_entity_id_is_stable_across_runs() -> None:
 
 def test_entity_id_uses_label_and_normalized_surface() -> None:
     resolver = SimpleResolver()
-    result = resolver.resolve(
-        [_candidate("Acme, Ltd.")], ontology=_ontology()
-    )
+    result = resolver.resolve([_candidate("Acme, Ltd.")], ontology=_ontology())
     assert result.entities[0].entity_id == "Company:acme_ltd"
 
 

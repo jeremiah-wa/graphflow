@@ -188,9 +188,7 @@ class SimpleResolver:
         exact_key = (candidate.label, normalized)
         existing_id = normalized_index.get(exact_key)
         if existing_id is not None:
-            entities_by_id[existing_id] = self._merge_into(
-                entities_by_id[existing_id], candidate
-            )
+            entities_by_id[existing_id] = self._merge_into(entities_by_id[existing_id], candidate)
             return ResolutionDecision(
                 candidate=candidate,
                 status="auto_link",
@@ -205,9 +203,7 @@ class SimpleResolver:
         for eid, entity in entities_by_id.items():
             if entity.label != candidate.label:
                 continue
-            score = SequenceMatcher(
-                None, normalized, _normalize(entity.canonical_surface)
-            ).ratio()
+            score = SequenceMatcher(None, normalized, _normalize(entity.canonical_surface)).ratio()
             if score > 0.0:
                 scored.append((score, eid))
         scored.sort(key=lambda x: (-x[0], x[1]))
@@ -217,9 +213,7 @@ class SimpleResolver:
             ties_at_top = [eid for s, eid in scored if s == best_score]
 
             if best_score >= self._auto_link_threshold and len(ties_at_top) == 1:
-                entities_by_id[best_id] = self._merge_into(
-                    entities_by_id[best_id], candidate
-                )
+                entities_by_id[best_id] = self._merge_into(entities_by_id[best_id], candidate)
                 return ResolutionDecision(
                     candidate=candidate,
                     status="auto_link",
@@ -234,9 +228,7 @@ class SimpleResolver:
 
             close_enough = [eid for s, eid in scored if s >= self._review_threshold]
             if close_enough:
-                new_id = self._make_unique_id(
-                    candidate.label, normalized, entities_by_id
-                )
+                new_id = self._make_unique_id(candidate.label, normalized, entities_by_id)
                 entities_by_id[new_id] = self._new_entity(
                     entity_id=new_id,
                     candidate=candidate,
