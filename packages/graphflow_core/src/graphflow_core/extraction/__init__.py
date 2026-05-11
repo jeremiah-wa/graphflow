@@ -21,6 +21,7 @@ The output model intentionally records:
 
 from __future__ import annotations
 
+from graphflow_core.extraction.accurate import AccurateExtractor
 from graphflow_core.extraction.base import (
     CandidateEntity,
     Extractor,
@@ -41,6 +42,7 @@ from graphflow_core.extraction.fast import FastExtractor
 from graphflow_core.extraction.provider import LLMError, LLMProvider, LLMResponse
 
 __all__ = [
+    "AccurateExtractor",
     "CandidateEntity",
     "CostEntry",
     "CostLimitExceeded",
