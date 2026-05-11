@@ -39,6 +39,11 @@ from graphflow_core.extraction.cost import (
 )
 from graphflow_core.extraction.errors import ExtractionError
 from graphflow_core.extraction.fast import FastExtractor
+from graphflow_core.extraction.hybrid import (
+    HybridExtractor,
+    HybridRouting,
+    HybridRunSummary,
+)
 from graphflow_core.extraction.provider import LLMError, LLMProvider, LLMResponse
 
 __all__ = [
@@ -51,6 +56,9 @@ __all__ = [
     "ExtractionError",
     "Extractor",
     "FastExtractor",
+    "HybridExtractor",
+    "HybridRouting",
+    "HybridRunSummary",
     "InMemoryExtractionCache",
     "LLMError",
     "LLMProvider",
