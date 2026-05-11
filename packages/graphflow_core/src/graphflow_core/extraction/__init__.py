@@ -26,13 +26,33 @@ from graphflow_core.extraction.base import (
     Extractor,
     TextChunk,
 )
+from graphflow_core.extraction.cache import (
+    ExtractionCache,
+    InMemoryExtractionCache,
+    make_cache_key,
+)
+from graphflow_core.extraction.cost import (
+    CostEntry,
+    CostLimitExceeded,
+    CostTracker,
+)
 from graphflow_core.extraction.errors import ExtractionError
 from graphflow_core.extraction.fast import FastExtractor
+from graphflow_core.extraction.provider import LLMError, LLMProvider, LLMResponse
 
 __all__ = [
     "CandidateEntity",
+    "CostEntry",
+    "CostLimitExceeded",
+    "CostTracker",
+    "ExtractionCache",
     "ExtractionError",
     "Extractor",
     "FastExtractor",
+    "InMemoryExtractionCache",
+    "LLMError",
+    "LLMProvider",
+    "LLMResponse",
     "TextChunk",
+    "make_cache_key",
 ]
